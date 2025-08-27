@@ -1,8 +1,7 @@
 import { Router } from 'express';
 import { UserRepository } from '../infra/repositories/UserRepository';
 import { AuthService } from '../services/Services';
-import { requireAuth } from '../middleware/auth';
-import { toPublicUserDTO } from '../infra/mappers/TopicMapper';
+import { authGuard } from '../middleware/auth';
 
 const userRepo = new UserRepository();
 const authService = new AuthService(userRepo);
@@ -18,6 +17,7 @@ authRouter.post('/seed-defaults', async (_req, res, next) => {
 
 authRouter.post('/login', async (req, res, next) => {
   try {
+    await authService.seedDefaultsIfEmpty();
     const out = await authService.login(req.body);
     res.json(out);
   } catch (err: any) {
@@ -26,6 +26,6 @@ authRouter.post('/login', async (req, res, next) => {
   }
 });
 
-authRouter.get('/me', requireAuth, async (req, res) => {
+authRouter.get('/me', authGuard, async (req, res) => {
   res.json({ user: req.user });
 });

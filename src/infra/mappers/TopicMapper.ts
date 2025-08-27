@@ -61,7 +61,7 @@ export function toTopicVersionDTO(v: TopicVersionRecord): TopicVersionDTO {
   };
 }
 
-export function toResourceDTO(r: ResourceRecord): ResourceDTO {
+export function toResourceDTO(r: ResourceRecord) {
   return {
     id: r.id,
     topicId: r.topicId,

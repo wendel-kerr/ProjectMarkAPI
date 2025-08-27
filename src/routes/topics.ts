@@ -2,17 +2,36 @@ import { Router } from 'express';
 import { TopicRepository } from '../infra/repositories/TopicRepository';
 import { ResourceRepository } from '../infra/repositories/ResourceRepository';
 import { TopicService, TopicTreeService } from '../services/Services';
-import { requireAuth, requirePermission } from '../middleware/auth';
+import { authGuard, requirePermission } from '../middleware/auth';
+import { z } from 'zod';
+import { TopicGraphService } from '../services/TopicGraphService';
 
 const topicRepo = new TopicRepository();
 const resourceRepo = new ResourceRepository();
 const service = new TopicService(topicRepo);
 const treeService = new TopicTreeService(topicRepo, resourceRepo);
+const graphService = new TopicGraphService(topicRepo);
 
 export const topicsRouter = Router();
 
-// All topics routes require auth
-topicsRouter.use(requireAuth);
+// All topics routes require auth token
+topicsRouter.use(authGuard);
+
+// ---- Shortest Path FIRST to avoid /:id capturing it ----
+topicsRouter.get('/shortest-path', requirePermission('read', 'topic'), (req, res) => {
+  const schema = z.object({ from: z.string().uuid(), to: z.string().uuid() });
+  const parsed = schema.safeParse(req.query);
+  if (!parsed.success) return res.status(400).json({ code: 'VALIDATION_ERROR', issues: parsed.error.issues });
+  try {
+    const { from, to } = parsed.data;
+    const path = graphService.shortestPath(from, to);
+    res.json({ path });
+  } catch (err: any) {
+    if (err?.message === 'TopicNotFound') return res.status(404).json({ code: 'TOPIC_NOT_FOUND' });
+    if (err?.message === 'NoPath') return res.status(422).json({ code: 'NO_PATH' });
+    res.status(500).json({ code: 'INTERNAL_ERROR' });
+  }
+});
 
 // Create
 topicsRouter.post('/', requirePermission('write', 'topic'), (req, res, next) => {
@@ -30,8 +49,9 @@ topicsRouter.post('/', requirePermission('write', 'topic'), (req, res, next) => 
 
 // List
 topicsRouter.get('/', requirePermission('read', 'topic'), (req, res) => {
-  const parentId = (req.query.parentId as string) ?? null;
-  const list = service.listTopics(parentId === 'null' ? null : parentId);
+  const parentIdRaw = req.query.parentId as string | undefined;
+  const parentId = parentIdRaw === undefined ? null : (parentIdRaw === 'null' ? null : parentIdRaw);
+  const list = service.listTopics(parentId);
   res.json(list);
 });
 
@@ -82,12 +102,10 @@ topicsRouter.get('/:id/versions/:version', requirePermission('read', 'topic'), (
 topicsRouter.get('/:id/tree', requirePermission('read', 'topic'), (req, res) => {
   const vParam = (req.query.version as string) ?? 'latest';
   const includeResources = ((req.query.includeResources as string) ?? 'false').toLowerCase() === 'true';
-
   const version = vParam === 'latest' ? 'latest' : Number(vParam);
   if (version !== 'latest' && (!Number.isInteger(version) || version <= 0)) {
-    return res.status(400).json({ code: 'VALIDATION_ERROR', message: 'version must be \"latest\" or a positive integer' });
+    return res.status(400).json({ code: 'VALIDATION_ERROR', message: 'version must be "latest" or a positive integer' });
   }
-
   const tree = treeService.getTree(req.params.id, version as any, includeResources);
   if (!tree) return res.status(404).json({ message: 'Topic not found' });
   res.json(tree);

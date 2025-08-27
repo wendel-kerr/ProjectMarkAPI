@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { TopicRepository } from '../infra/repositories/TopicRepository';
 import { ResourceRepository } from '../infra/repositories/ResourceRepository';
 import { ResourceService } from '../services/Services';
-import { requireAuth, requirePermission } from '../middleware/auth';
+import { authGuard, requirePermission } from '../middleware/auth';
 
 const topicRepo = new TopicRepository();
 const resourceRepo = new ResourceRepository();
@@ -10,7 +10,7 @@ const service = new ResourceService(topicRepo, resourceRepo);
 
 export const resourcesRouter = Router();
 
-resourcesRouter.use(requireAuth);
+resourcesRouter.use(authGuard);
 
 resourcesRouter.post('/', requirePermission('write', 'resource'), (req, res, next) => {
   try {

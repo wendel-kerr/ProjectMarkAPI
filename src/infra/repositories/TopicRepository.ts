@@ -16,11 +16,9 @@ export class TopicRepository {
 
   private siblingsWithSameName(parentId: string | null, name: string, exceptId?: string): TopicRecord[] {
     const siblings = collections.topics.find({ parentTopicId: parentId }) as TopicRecord[];
-
     const filtered = siblings.filter((t: TopicRecord) =>
       this.notDeletedFilter(t) && (!exceptId || t.id !== exceptId)
     );
-
     return filtered.filter((t: TopicRecord) => {
       const v = this.getLatestVersion(t.id);
       return v?.name === name;
@@ -43,9 +41,7 @@ export class TopicRepository {
   createChild(parentId: string, params: { id?: string; name: string; content: string }) {
     const parent = collections.topics.findOne({ id: parentId });
     if (!parent || parent.deletedAt) throw new Error('ParentNotFound');
-    if (this.siblingsWithSameName(parentId, params.name).length > 0) {
-      throw new Error(`DuplicateSiblingName:${params.name}`);
-    }
+    if (this.siblingsWithSameName(parentId, params.name).length > 0) throw new Error(`DuplicateSiblingName:${params.name}`);
     const id = params.id ?? randomUUID();
     const now = new Date();
     const topic: TopicRecord = { id, parentTopicId: parentId, currentVersion: 1, createdAt: now, updatedAt: now, deletedAt: null };
@@ -75,9 +71,7 @@ export class TopicRepository {
 
     return topics
       .map((t: TopicRecord) => {
-        const v = collections.topic_versions.findOne({
-          topicId: t.id, version: t.currentVersion
-        }) as TopicVersionRecord | null;
+        const v = collections.topic_versions.findOne({ topicId: t.id, version: t.currentVersion }) as TopicVersionRecord | null;
         return v ? { topic: t, version: v } : null;
       })
       .filter((x): x is { topic: TopicRecord; version: TopicVersionRecord } => Boolean(x));

@@ -1,4 +1,4 @@
-// tsconfig should include this folder
+// augment Express Request.user
 import 'express-serve-static-core';
 import { UserRole } from '../domain/users/Role';
 

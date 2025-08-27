@@ -7,11 +7,12 @@ import { UserRepository } from './infra/repositories/UserRepository';
 import { AuthService } from './services/Services';
 
 export const app = express();
+app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
 app.get('/health', (_req, res) => res.json({ ok: true }));
 
-// seed default users (idempotent) at startup
+// seed default users at startup (idempotent)
 (async () => {
   const repo = new UserRepository();
   const svc = new AuthService(repo);
@@ -23,8 +24,10 @@ app.use('/topics', topicsRouter);
 app.use('/resources', resourcesRouter);
 app.use('/', docsRouter);
 
-// basic error handler
+// error handler
 app.use((err: any, _req: any, res: any, _next: any) => {
   console.error(err);
   res.status(500).json({ code: 'INTERNAL_ERROR', message: 'Something went wrong' });
 });
+
+export default app;

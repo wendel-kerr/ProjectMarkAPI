@@ -1,69 +1,16 @@
-
-> knowledge-base-phase8-auth-rbac@1.0.0 test
-> jest --passWithNoTests
-
 PASS src/tests/roleStrategy.test.ts
-PASS src/tests/topicComposite.test.ts
 PASS src/tests/topicFactory.test.ts
-FAIL src/tests/integration/topics.int.test.ts
-  ● Topics routes (Phase 3) › creates root and children, lists by parentId, updates and deletes with validations
+PASS src/tests/topicComposite.test.ts
+PASS src/tests/integration/tree.int.test.ts (9.976 s)
+PASS src/tests/integration/rbac.int.test.ts (9.917 s)
+PASS src/tests/integration/versioning.int.test.ts (9.987 s)
+PASS src/tests/integration/topics.int.test.ts (9.971 s)
+PASS src/tests/integration/shortest_path.int.test.ts (9.949 s)
+PASS src/tests/integration/auth_rbac.int.test.ts (9.952 s)
+PASS src/tests/integration/resources.int.test.ts (9.989 s)
 
-    expect(received).toBe(expected) // Object.is equality
-
-    Expected: 201
-    Received: 401
-
-       6 |     // create a root
-       7 |     const root = await request(app).post('/topics').send({ name: 'RootA', content: 'A', parentId: null });
-    >  8 |     expect(root.status).toBe(201);
-         |                         ^
-       9 |     const rootId = root.body.id;
-      10 |
-      11 |     // create two children under RootA
-
-      at Object.<anonymous> (src/tests/integration/topics.int.test.ts:8:25)
-
-FAIL src/tests/integration/tree.int.test.ts
-  ● Topic tree (Phase 5) › returns recursive tree and respects version param
-
-    expect(received).toBe(expected) // Object.is equality
-
-    Expected: 200
-    Received: 401
-
-      14 |     // Update ChildB name to test versioning in tree
-      15 |     const upd = await request(app).patch(`/topics/${c2.body.id}`).send({ name: 'ChildB_NEW' });
-    > 16 |     expect(upd.status).toBe(200);
-         |                        ^
-      17 |
-      18 |     // Tree latest
-      19 |     const latest = await request(app).get(`/topics/${rootId}/tree`).expect(200);
-
-      at Object.<anonymous> (src/tests/integration/tree.int.test.ts:16:24)
-
-FAIL src/tests/integration/resources.int.test.ts
-  ● Resources CRUD (Phase 6) › creates, reads, lists by topic, updates and deletes resources; tree includes resources
-
-    expect(received).toBe(expected) // Object.is equality
-
-    Expected: 201
-    Received: 401
-
-      14 |     // Create resources on both nodes
-      15 |     const r1 = await request(app).post('/resources').send({ topicId: rootId, url: 'https://example.com/a', type: 'link', description: 'Root link' });
-    > 16 |     expect(r1.status).toBe(201);
-         |                       ^
-      17 |     const r2 = await request(app).post('/resources').send({ topicId: childId, url: 'https://example.com/b', type: 'pdf', description: 'Child pdf' });
-      18 |     expect(r2.status).toBe(201);
-      19 |
-
-      at Object.<anonymous> (src/tests/integration/resources.int.test.ts:16:23)
-
-PASS src/tests/integration/auth_rbac.int.test.ts
-PASS src/tests/integration/versioning.int.test.ts (5.042 s)
-
-Test Suites: 3 failed, 5 passed, 8 total
-Tests:       3 failed, 9 passed, 12 total
+Test Suites: 10 passed, 10 total
+Tests:       14 passed, 14 total
 Snapshots:   0 total
-Time:        5.727 s
+Time:        10.824 s
 Ran all test suites.

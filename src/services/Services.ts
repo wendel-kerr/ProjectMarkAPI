@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { TopicRepository } from '../infra/repositories/TopicRepository';
 import { ResourceRepository } from '../infra/repositories/ResourceRepository';
-import { toTopicDTO, TopicDTO, toTopicVersionDTO, TopicVersionDTO, toResourceDTO, toPublicUserDTO, PublicUserDTO } from '../infra/mappers/TopicMapper';
+import { toTopicDTO, TopicDTO, toTopicVersionDTO, TopicVersionDTO, toResourceDTO } from '../infra/mappers/TopicMapper';
 import { UserRepository } from '../infra/repositories/UserRepository';
 import bcrypt from 'bcryptjs';
 import { signJwt } from '../middleware/auth';
@@ -16,18 +16,14 @@ export const createTopicSchema = z.object({
 export const updateTopicSchema = z.object({
   name: z.string().min(1).optional(),
   content: z.string().min(1).optional(),
-}).refine(data => data.name !== undefined || data.content !== undefined, {
-  message: 'At least one field (name or content) must be provided',
-});
+}).refine(d => d.name !== undefined || d.content !== undefined, { message: 'At least one field must be provided' });
 
 export class TopicService {
   constructor(private readonly repo: TopicRepository) {}
 
   createTopic(input: unknown): TopicDTO {
     const { name, content, parentId } = createTopicSchema.parse(input);
-    const res = parentId
-      ? this.repo.createChild(parentId, { name, content })
-      : this.repo.createRoot({ name, content });
+    const res = parentId ? this.repo.createChild(parentId, { name, content }) : this.repo.createRoot({ name, content });
     return toTopicDTO(res.topic, res.version);
   }
 
@@ -43,26 +39,54 @@ export class TopicService {
   }
 
   updateTopic(id: string, input: unknown): TopicDTO | null {
-    const update = updateTopicSchema.parse(input);
-    const next = this.repo.appendVersion(id, update);
+    const upd = updateTopicSchema.parse(input);
+    const next = this.repo.appendVersion(id, upd);
     if (!next) return null;
     const found = this.repo.getById(id)!;
     return toTopicDTO(found.topic, next);
   }
 
-  deleteTopic(id: string): boolean {
-    return this.repo.softDelete(id);
-  }
+  deleteTopic(id: string): boolean { return this.repo.softDelete(id); }
 
   listVersions(id: string): TopicVersionDTO[] | null {
     const arr = this.repo.listVersions(id);
-    if (!arr) return null;
-    return arr.map(toTopicVersionDTO);
+    return arr ? arr.map(toTopicVersionDTO) : null;
   }
   getVersion(id: string, version: number): TopicVersionDTO | null {
     const v = this.repo.getVersion(id, version);
-    if (!v) return null;
-    return toTopicVersionDTO(v);
+    return v ? toTopicVersionDTO(v) : null;
+  }
+}
+
+// Tree service
+type TreeNode = TopicDTO & { children: TreeNode[]; resources?: ReturnType<typeof toResourceDTO>[] };
+
+export class TopicTreeService {
+  constructor(private readonly topicRepo: TopicRepository, private readonly resourceRepo: ResourceRepository) {}
+
+  getTree(id: string, version: number|'latest', includeResources: boolean): TreeNode | null {
+    const topicRec = this.topicRepo.getTopicRecord(id);
+    if (!topicRec) return null;
+    const versionRec = version === 'latest'
+      ? this.topicRepo.getVersion(id, topicRec.currentVersion)!
+      : this.topicRepo.getVersion(id, version as number);
+    if (!versionRec) return null;
+
+    const node: TreeNode = {
+      id: topicRec.id,
+      parentTopicId: topicRec.parentTopicId,
+      name: versionRec.name,
+      content: versionRec.content,
+      version: versionRec.version,
+      createdAt: topicRec.createdAt,
+      updatedAt: versionRec.updatedAt,
+      children: [],
+    };
+    if (includeResources) node.resources = this.resourceRepo.listByTopic(id).map(toResourceDTO);
+
+    node.children = this.topicRepo.listChildrenRecords(id).map(c => this.getTree(c.id, 'latest', includeResources)!).filter(Boolean);
+
+    return node;
   }
 }
 
@@ -81,10 +105,7 @@ export const updateResourceSchema = z.object({
 }).refine(d => Object.keys(d).length > 0, { message: 'At least one field must be provided' });
 
 export class ResourceService {
-  constructor(
-    private readonly topicRepo: TopicRepository,
-    private readonly resourceRepo: ResourceRepository
-  ) {}
+  constructor(private readonly topicRepo: TopicRepository, private readonly resourceRepo: ResourceRepository) {}
 
   createResource(input: unknown) {
     const data = createResourceSchema.parse(input);
@@ -106,80 +127,17 @@ export class ResourceService {
   }
 
   updateResource(id: string, input: unknown) {
-    const update = updateResourceSchema.parse(input);
-    const rec = this.resourceRepo.update(id, update);
+    const upd = updateResourceSchema.parse(input);
+    const rec = this.resourceRepo.update(id, upd);
     return rec ? toResourceDTO(rec) : null;
   }
 
-  deleteResource(id: string) {
-    return this.resourceRepo.softDelete(id);
-  }
-}
-
-// Tree service DTO
-export type TopicTreeDTO = {
-  id: string;
-  name: string;
-  version: number;
-  children: TopicTreeDTO[];
-  resources?: ReturnType<typeof toResourceDTO>[];
-};
-
-export class TopicTreeService {
-  constructor(
-    private readonly topicRepo: TopicRepository,
-    private readonly resourceRepo: ResourceRepository
-  ) {}
-
-  getTree(rootId: string, version: 'latest' | number = 'latest', includeResources = false): TopicTreeDTO | null {
-    const rootTopicRec = this.topicRepo.getTopicRecord(rootId);
-    if (!rootTopicRec) return null;
-
-    const resolveName = (topicId: string): { name: string; version: number } | null => {
-      const rec = this.topicRepo.getTopicRecord(topicId);
-      if (!rec) return null;
-      const ver = version === 'latest' ? rec.currentVersion : version;
-      const vRec = this.topicRepo.getVersion(topicId, ver);
-      if (!vRec) return null;
-      return { name: vRec.name, version: vRec.version };
-    };
-
-    const build = (topicId: string): TopicTreeDTO | null => {
-      const tRec = this.topicRepo.getTopicRecord(topicId);
-      if (!tRec) return null;
-      const nm = resolveName(topicId);
-      if (!nm) return null;
-
-      const childrenRecs = this.topicRepo.listChildrenRecords(topicId);
-      const children: TopicTreeDTO[] = [];
-      for (const child of childrenRecs) {
-        const node = build(child.id);
-        if (node) children.push(node);
-      }
-
-      const node: TopicTreeDTO = {
-        id: topicId,
-        name: nm.name,
-        version: nm.version,
-        children
-      };
-
-      if (includeResources) {
-        node.resources = this.resourceRepo.listByTopic(topicId).map(toResourceDTO);
-      }
-
-      return node;
-    };
-
-    return build(rootId);
-  }
+  deleteResource(id: string) { return this.resourceRepo.softDelete(id); }
 }
 
 // Auth service
-export const loginSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(3),
-});
+const emailStrict = z.string().email().trim().transform(v => v.toLowerCase());
+export const loginSchema = z.object({ email: emailStrict, password: z.string().min(3) });
 
 export class AuthService {
   constructor(private readonly userRepo: UserRepository) {}
@@ -190,9 +148,8 @@ export class AuthService {
     if (!user) throw new Error('INVALID_CREDENTIALS');
     const ok = await bcrypt.compare(password, user.passwordHash);
     if (!ok) throw new Error('INVALID_CREDENTIALS');
-    const publicUser = toPublicUserDTO(user);
-    const token = signJwt({ id: publicUser.id, name: publicUser.name, email: publicUser.email, role: publicUser.role as any });
-    return { token, user: publicUser };
+    const token = signJwt({ id: user.id, name: user.name, email: user.email, role: user.role as any });
+    return { token, user: { id: user.id, name: user.name, email: user.email, role: user.role, createdAt: user.createdAt, updatedAt: user.updatedAt } };
   }
 
   async seedDefaultsIfEmpty() {

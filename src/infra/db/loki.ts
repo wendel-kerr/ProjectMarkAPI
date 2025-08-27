@@ -1,8 +1,6 @@
 import Loki from 'lokijs';
 
-export const db = new Loki('knowledge-base.db', {
-  autoload: false,
-});
+export const db = new Loki('knowledge-base.db', { autoload: false });
 
 export interface TopicRecord {
   id: string;
@@ -39,12 +37,14 @@ export interface UserRecord {
   name: string;
   email: string;
   role: 'Admin' | 'Editor' | 'Viewer';
+  passwordHash: string;
   createdAt: Date;
+  updatedAt: Date;
 }
 
 export const collections = {
   topics: db.addCollection<TopicRecord>('topics', { unique: ['id'], indices: ['parentTopicId', 'deletedAt'] }),
   topic_versions: db.addCollection<TopicVersionRecord>('topic_versions', { indices: ['topicId', 'version'] }),
   resources: db.addCollection<ResourceRecord>('resources', { indices: ['topicId', 'deletedAt'] }),
-  users: db.addCollection<UserRecord>('users', { unique: ['id'] }),
+  users: db.addCollection<UserRecord>('users', { unique: ['id'], indices: ['email'] }),
 };

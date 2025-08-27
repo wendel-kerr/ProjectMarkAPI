@@ -1,18 +1,8 @@
-# Phase 6 — CRUD de Resources + árvore com resources
+# Phase 8 — Auth + RBAC [COMPLETO e Corrigido]
 
-Endpoints:
-- POST   /resources
-- GET    /resources/:id
-- GET    /resources?topicId=<id>
-- PATCH  /resources/:id
-- DELETE /resources/:id
+✔ Emails corrigidos para usar domínio com TLD (ex: admin@example.com)  
+✔ Testes atualizados com autenticação JWT usando tokens corretos  
+✔ Seeds criam usuários com TLD  
+✔ RBAC: Admin (full), Editor (read/write), Viewer (read-only)
 
-- GET    /topics/:id/tree?includeResources=true|false&version=latest|<n>
-
-Quickstart:
-```
-npm install
-npm run dev
-# ou
-npm run build && npm start
-```
+Testes como `resources.int.test.ts` agora fazem login e incluem o header Authorization.

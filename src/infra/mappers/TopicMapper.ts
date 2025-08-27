@@ -1,4 +1,4 @@
-import { TopicRecord, TopicVersionRecord, ResourceRecord } from '../db/loki';
+import { TopicRecord, TopicVersionRecord, ResourceRecord, UserRecord } from '../db/loki';
 
 export type TopicDTO = {
   id: string;
@@ -25,6 +25,15 @@ export type ResourceDTO = {
   url: string;
   description?: string;
   type: string;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+export type PublicUserDTO = {
+  id: string;
+  name: string;
+  email: string;
+  role: 'Admin' | 'Editor' | 'Viewer';
   createdAt: Date;
   updatedAt: Date;
 };
@@ -61,5 +70,16 @@ export function toResourceDTO(r: ResourceRecord): ResourceDTO {
     type: r.type,
     createdAt: r.createdAt,
     updatedAt: r.updatedAt,
+  };
+}
+
+export function toPublicUserDTO(u: UserRecord): PublicUserDTO {
+  return {
+    id: u.id,
+    name: u.name,
+    email: u.email,
+    role: u.role,
+    createdAt: u.createdAt,
+    updatedAt: u.updatedAt,
   };
 }

@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { TopicRepository } from '../infra/repositories/TopicRepository';
 import { ResourceRepository } from '../infra/repositories/ResourceRepository';
 import { TopicService, TopicTreeService } from '../services/Services';
+import { requireAuth, requirePermission } from '../middleware/auth';
 
 const topicRepo = new TopicRepository();
 const resourceRepo = new ResourceRepository();
@@ -10,7 +11,11 @@ const treeService = new TopicTreeService(topicRepo, resourceRepo);
 
 export const topicsRouter = Router();
 
-topicsRouter.post('/', (req, res, next) => {
+// All topics routes require auth
+topicsRouter.use(requireAuth);
+
+// Create
+topicsRouter.post('/', requirePermission('write', 'topic'), (req, res, next) => {
   try {
     const dto = service.createTopic(req.body);
     res.status(201).json(dto);
@@ -23,19 +28,22 @@ topicsRouter.post('/', (req, res, next) => {
   }
 });
 
-topicsRouter.get('/', (req, res) => {
+// List
+topicsRouter.get('/', requirePermission('read', 'topic'), (req, res) => {
   const parentId = (req.query.parentId as string) ?? null;
   const list = service.listTopics(parentId === 'null' ? null : parentId);
   res.json(list);
 });
 
-topicsRouter.get('/:id', (req, res) => {
+// Get by id
+topicsRouter.get('/:id', requirePermission('read', 'topic'), (req, res) => {
   const dto = service.getTopic(req.params.id);
   if (!dto) return res.status(404).json({ message: 'Topic not found' });
   res.json(dto);
 });
 
-topicsRouter.patch('/:id', (req, res, next) => {
+// Update
+topicsRouter.patch('/:id', requirePermission('write', 'topic'), (req, res, next) => {
   try {
     const dto = service.updateTopic(req.params.id, req.body);
     if (!dto) return res.status(404).json({ message: 'Topic not found' });
@@ -49,19 +57,20 @@ topicsRouter.patch('/:id', (req, res, next) => {
   }
 });
 
-topicsRouter.delete('/:id', (req, res) => {
+// Delete
+topicsRouter.delete('/:id', requirePermission('write', 'topic'), (req, res) => {
   const ok = service.deleteTopic(req.params.id);
   if (!ok) return res.status(404).json({ message: 'Topic not found' });
   res.status(204).send();
 });
 
 // Versions
-topicsRouter.get('/:id/versions', (req, res) => {
+topicsRouter.get('/:id/versions', requirePermission('read', 'topic'), (req, res) => {
   const list = service.listVersions(req.params.id);
   if (!list) return res.status(404).json({ message: 'Topic not found' });
   res.json(list);
 });
-topicsRouter.get('/:id/versions/:version', (req, res) => {
+topicsRouter.get('/:id/versions/:version', requirePermission('read', 'topic'), (req, res) => {
   const versionNum = Number(req.params.version);
   if (!Number.isInteger(versionNum) || versionNum <= 0) return res.status(400).json({ code: 'VALIDATION_ERROR', message: 'version must be a positive integer' });
   const item = service.getVersion(req.params.id, versionNum);
@@ -70,13 +79,13 @@ topicsRouter.get('/:id/versions/:version', (req, res) => {
 });
 
 // Tree
-topicsRouter.get('/:id/tree', (req, res) => {
+topicsRouter.get('/:id/tree', requirePermission('read', 'topic'), (req, res) => {
   const vParam = (req.query.version as string) ?? 'latest';
   const includeResources = ((req.query.includeResources as string) ?? 'false').toLowerCase() === 'true';
 
   const version = vParam === 'latest' ? 'latest' : Number(vParam);
   if (version !== 'latest' && (!Number.isInteger(version) || version <= 0)) {
-    return res.status(400).json({ code: 'VALIDATION_ERROR', message: 'version must be "latest" or a positive integer' });
+    return res.status(400).json({ code: 'VALIDATION_ERROR', message: 'version must be \"latest\" or a positive integer' });
   }
 
   const tree = treeService.getTree(req.params.id, version as any, includeResources);

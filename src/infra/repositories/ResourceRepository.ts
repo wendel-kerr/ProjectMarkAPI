@@ -25,7 +25,7 @@ export class ResourceRepository {
   }
 
   listByTopic(topicId: string): ResourceRecord[] {
-    return collections.resources.find({ topicId }).filter(r => !r.deletedAt);
+    return collections.resources.find({ topicId }).filter((r: ResourceRecord) => !r.deletedAt);
   }
 
   update(id: string, update: { url?: string; description?: string; type?: string }): ResourceRecord | null {

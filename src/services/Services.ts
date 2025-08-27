@@ -1,16 +1,19 @@
 import { z } from 'zod';
 import { TopicRepository } from '../infra/repositories/TopicRepository';
 import { ResourceRepository } from '../infra/repositories/ResourceRepository';
-import { toTopicDTO, TopicDTO, toTopicVersionDTO, TopicVersionDTO, toResourceDTO } from '../infra/mappers/TopicMapper';
+import { toTopicDTO, TopicDTO, toTopicVersionDTO, TopicVersionDTO, toResourceDTO, toPublicUserDTO, PublicUserDTO } from '../infra/mappers/TopicMapper';
+import { UserRepository } from '../infra/repositories/UserRepository';
+import bcrypt from 'bcryptjs';
+import { signJwt } from '../middleware/auth';
 
 // Topic service
-const createTopicSchema = z.object({
+export const createTopicSchema = z.object({
   name: z.string().min(1),
   content: z.string().min(1),
   parentId: z.string().uuid().nullable().optional(),
 });
 
-const updateTopicSchema = z.object({
+export const updateTopicSchema = z.object({
   name: z.string().min(1).optional(),
   content: z.string().min(1).optional(),
 }).refine(data => data.name !== undefined || data.content !== undefined, {
@@ -64,14 +67,14 @@ export class TopicService {
 }
 
 // Resource service
-const createResourceSchema = z.object({
+export const createResourceSchema = z.object({
   topicId: z.string().uuid(),
   url: z.string().url(),
   description: z.string().max(1000).optional(),
   type: z.string().min(1),
 });
 
-const updateResourceSchema = z.object({
+export const updateResourceSchema = z.object({
   url: z.string().url().optional(),
   description: z.string().max(1000).optional(),
   type: z.string().min(1).optional(),
@@ -169,5 +172,34 @@ export class TopicTreeService {
     };
 
     return build(rootId);
+  }
+}
+
+// Auth service
+export const loginSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(3),
+});
+
+export class AuthService {
+  constructor(private readonly userRepo: UserRepository) {}
+
+  async login(input: unknown) {
+    const { email, password } = loginSchema.parse(input);
+    const user = await this.userRepo.findByEmail(email);
+    if (!user) throw new Error('INVALID_CREDENTIALS');
+    const ok = await bcrypt.compare(password, user.passwordHash);
+    if (!ok) throw new Error('INVALID_CREDENTIALS');
+    const publicUser = toPublicUserDTO(user);
+    const token = signJwt({ id: publicUser.id, name: publicUser.name, email: publicUser.email, role: publicUser.role as any });
+    return { token, user: publicUser };
+  }
+
+  async seedDefaultsIfEmpty() {
+    if ((await this.userRepo.count()) > 0) return;
+    const hash = (pwd: string) => bcrypt.hashSync(pwd, 8);
+    await this.userRepo.create({ name: 'Admin', email: 'admin@example.com', role: 'Admin', passwordHash: hash('password') });
+    await this.userRepo.create({ name: 'Editor', email: 'editor@example.com', role: 'Editor', passwordHash: hash('password') });
+    await this.userRepo.create({ name: 'Viewer', email: 'viewer@example.com', role: 'Viewer', passwordHash: hash('password') });
   }
 }

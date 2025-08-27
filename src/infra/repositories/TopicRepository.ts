@@ -15,8 +15,12 @@ export class TopicRepository {
   }
 
   private siblingsWithSameName(parentId: string | null, name: string, exceptId?: string): TopicRecord[] {
-    const siblings = collections.topics.find({ parentTopicId: parentId });
-    const filtered = siblings.filter((t: TopicRecord) => this.notDeletedFilter(t) && (!exceptId || t.id !== exceptId));
+    const siblings = collections.topics.find({ parentTopicId: parentId }) as TopicRecord[];
+
+    const filtered = siblings.filter((t: TopicRecord) =>
+      this.notDeletedFilter(t) && (!exceptId || t.id !== exceptId)
+    );
+
     return filtered.filter((t: TopicRecord) => {
       const v = this.getLatestVersion(t.id);
       return v?.name === name;
@@ -66,15 +70,22 @@ export class TopicRepository {
   }
 
   listByParent(parentId: string | null) {
-    const topics = collections.topics.find({ parentTopicId: parentId }).filter(this.notDeletedFilter);
-    return topics.map((t: TopicRecord) => {
-      const v = collections.topic_versions.findOne({ topicId: t.id, version: t.currentVersion });
-      return v ? { topic: t, version: v } : null;
-    }).filter(Boolean) as { topic: TopicRecord; version: TopicVersionRecord }[];
+    const topics = (collections.topics.find({ parentTopicId: parentId }) as TopicRecord[])
+      .filter((t: TopicRecord) => this.notDeletedFilter(t));
+
+    return topics
+      .map((t: TopicRecord) => {
+        const v = collections.topic_versions.findOne({
+          topicId: t.id, version: t.currentVersion
+        }) as TopicVersionRecord | null;
+        return v ? { topic: t, version: v } : null;
+      })
+      .filter((x): x is { topic: TopicRecord; version: TopicVersionRecord } => Boolean(x));
   }
 
   listChildrenRecords(parentId: string): TopicRecord[] {
-    return collections.topics.find({ parentTopicId: parentId }).filter(this.notDeletedFilter);
+    return (collections.topics.find({ parentTopicId: parentId }) as TopicRecord[])
+      .filter((t: TopicRecord) => this.notDeletedFilter(t));
   }
 
   appendVersion(topicId: string, update: { name?: string; content?: string }) {

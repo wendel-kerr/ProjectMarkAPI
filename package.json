@@ -1,19 +1,29 @@
 {
-  "name": "knowledge-base-phase1-domain",
+  "name": "knowledge-base-phase2-persistence",
   "version": "1.0.0",
-  "description": "Phase 1 - Domain model (OOP + patterns) for Dynamic Knowledge Base API",
-  "main": "dist/index.js",
+  "description": "Phase 2 - In-memory persistence (LokiJS) + Repositories + Minimal Express routes",
+  "main": "dist/server.js",
   "license": "MIT",
   "scripts": {
     "build": "tsc -p tsconfig.json",
+    "start": "node dist/server.js",
+    "dev": "ts-node src/server.ts",
     "test": "jest --passWithNoTests",
-    "test:watch": "jest --watch",
-    "lint": "echo \"(add eslint/prettier in later phases)\"",
-    "dev": "echo \"Domain-only package. No server in Phase 1.\""
+    "test:watch": "jest --watch"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "lokijs": "^1.5.12",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@types/express": "^4.17.21",
     "@types/jest": "^29.5.12",
+    "@types/lokijs": "^1.5.14",
+    "@types/node": "^20.11.30",
+    "@types/supertest": "^2.0.16",
     "jest": "^29.7.0",
+    "supertest": "^7.1.4",
     "ts-jest": "^29.2.5",
     "ts-node": "^10.9.2",
     "typescript": "^5.5.4"

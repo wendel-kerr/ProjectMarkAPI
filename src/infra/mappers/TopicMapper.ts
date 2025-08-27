@@ -1,5 +1,14 @@
+/**
+ * TopicMapper.ts
+ * Conversão de registros Loki para DTOs expostos.
+ * Comentários: este arquivo contém comentários explicativos nas principais seções,
+ * descrevendo o que cada bloco faz passo a passo.
+ */
+
+// Importações de dependências e tipos
 import { TopicRecord, TopicVersionRecord, ResourceRecord, UserRecord } from '../db/loki';
 
+// Declarações/exports principais
 export type TopicDTO = {
   id: string;
   parentTopicId: string | null;
@@ -10,6 +19,7 @@ export type TopicDTO = {
   updatedAt: Date;
 };
 
+// Declarações/exports principais
 export type TopicVersionDTO = {
   topicId: string;
   version: number;
@@ -19,6 +29,7 @@ export type TopicVersionDTO = {
   updatedAt: Date;
 };
 
+// Declarações/exports principais
 export type ResourceDTO = {
   id: string;
   topicId: string;
@@ -29,6 +40,7 @@ export type ResourceDTO = {
   updatedAt: Date;
 };
 
+// Declarações/exports principais
 export type PublicUserDTO = {
   id: string;
   name: string;
@@ -38,7 +50,9 @@ export type PublicUserDTO = {
   updatedAt: Date;
 };
 
+// Declarações/exports principais
 export function toTopicDTO(topicRec: TopicRecord, versionRec: TopicVersionRecord): TopicDTO {
+  // Retorna o resultado da operação
   return {
     id: topicRec.id,
     parentTopicId: topicRec.parentTopicId,
@@ -50,7 +64,9 @@ export function toTopicDTO(topicRec: TopicRecord, versionRec: TopicVersionRecord
   };
 }
 
+// Declarações/exports principais
 export function toTopicVersionDTO(v: TopicVersionRecord): TopicVersionDTO {
+  // Retorna o resultado da operação
   return {
     topicId: v.topicId,
     version: v.version,
@@ -61,7 +77,9 @@ export function toTopicVersionDTO(v: TopicVersionRecord): TopicVersionDTO {
   };
 }
 
+// Declarações/exports principais
 export function toResourceDTO(r: ResourceRecord) {
+  // Retorna o resultado da operação
   return {
     id: r.id,
     topicId: r.topicId,
@@ -73,7 +91,9 @@ export function toResourceDTO(r: ResourceRecord) {
   };
 }
 
+// Declarações/exports principais
 export function toPublicUserDTO(u: UserRecord): PublicUserDTO {
+  // Retorna o resultado da operação
   return {
     id: u.id,
     name: u.name,

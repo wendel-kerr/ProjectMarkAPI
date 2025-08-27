@@ -1,4 +1,13 @@
+/**
+ * TopicVersionFactory.ts
+ * Factory explícita para criar versões de tópico.
+ * Comentários: este arquivo contém comentários explicativos nas principais seções,
+ * descrevendo o que cada bloco faz passo a passo.
+ */
+
+// Importações de dependências e tipos
 import { TopicVersionRecord } from '../../infra/db/loki';
+// Importações de dependências e tipos
 import { randomUUID } from 'crypto';
 
 /**
@@ -7,9 +16,11 @@ import { randomUUID } from 'crypto';
  * - createNext: clona dados da versão anterior e aplica patch (v+1)
  * Mantém createdAt da versão inicial e atualiza updatedAt para "now".
  */
+// Declarações/exports principais
 export class TopicVersionFactory {
   static createInitial(params: { topicId: string; name: string; content: string; now?: Date }): TopicVersionRecord {
     const now = params.now ?? new Date();
+  // Retorna o resultado da operação
     return {
       id: randomUUID(),
       topicId: params.topicId,
@@ -23,6 +34,7 @@ export class TopicVersionFactory {
 
   static createNext(params: { topicId: string; previous: TopicVersionRecord; patch: { name?: string; content?: string }; now?: Date }): TopicVersionRecord {
     const now = params.now ?? new Date();
+  // Retorna o resultado da operação
     return {
       id: randomUUID(),
       topicId: params.topicId,

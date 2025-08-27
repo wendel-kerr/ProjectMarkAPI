@@ -1,7 +1,17 @@
+/**
+ * loki.ts
+ * Configuração do Loki e tipos de registro (tabelas in-memory).
+ * Comentários: este arquivo contém comentários explicativos nas principais seções,
+ * descrevendo o que cada bloco faz passo a passo.
+ */
+
+// Importações de dependências e tipos
 import Loki from 'lokijs';
 
+// Declarações/exports principais
 export const db = new Loki('knowledge-base.db', { autoload: false });
 
+// Declarações/exports principais
 export interface TopicRecord {
   id: string;
   parentTopicId: string | null;
@@ -11,6 +21,7 @@ export interface TopicRecord {
   deletedAt?: Date | null;
 }
 
+// Declarações/exports principais
 export interface TopicVersionRecord {
   id: string;
   topicId: string;
@@ -21,6 +32,7 @@ export interface TopicVersionRecord {
   updatedAt: Date;
 }
 
+// Declarações/exports principais
 export interface ResourceRecord {
   id: string;
   topicId: string;
@@ -32,6 +44,7 @@ export interface ResourceRecord {
   deletedAt?: Date | null;
 }
 
+// Declarações/exports principais
 export interface UserRecord {
   id: string;
   name: string;
@@ -42,6 +55,7 @@ export interface UserRecord {
   updatedAt: Date;
 }
 
+// Declarações/exports principais
 export const collections = {
   topics: db.addCollection<TopicRecord>('topics', { unique: ['id'], indices: ['parentTopicId', 'deletedAt'] }),
   topic_versions: db.addCollection<TopicVersionRecord>('topic_versions', { indices: ['topicId', 'version'] }),

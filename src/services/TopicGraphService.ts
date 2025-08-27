@@ -1,14 +1,27 @@
+/**
+ * TopicGraphService.ts
+ * Algoritmo BFS para menor caminho entre tópicos.
+ * Comentários: este arquivo contém comentários explicativos nas principais seções,
+ * descrevendo o que cada bloco faz passo a passo.
+ */
+
+// Importações de dependências e tipos
 import { TopicRepository } from '../infra/repositories/TopicRepository';
 
+// Declarações/exports principais
 export type PathNodeDTO = { id: string; name: string; version: number };
 
+// Declarações/exports principais
 export class TopicGraphService {
+  // Construtor injeta dependências necessárias
   constructor(private readonly topicRepo: TopicRepository) {}
 
+  // Método principal da regra de negócio
   shortestPath(fromId: string, toId: string): PathNodeDTO[] {
     if (fromId === toId) {
       const single = this.resolveNode(fromId);
       if (!single) throw new Error('TopicNotFound');
+  // Retorna o resultado da operação
       return [single];
     }
 
@@ -25,6 +38,7 @@ export class TopicGraphService {
     while (queue.length > 0) {
       const current = queue.shift() as string;
       if (current === toId) {
+  // Retorna o resultado da operação
         return this.reconstructPath(parent, toId);
       }
 
@@ -53,6 +67,7 @@ export class TopicGraphService {
     const children = this.topicRepo.listChildrenRecords(id);
     for (const c of children) result.push(c.id);
 
+  // Retorna o resultado da operação
     return result;
   }
 
@@ -66,6 +81,7 @@ export class TopicGraphService {
     ids.reverse();
     const path = ids.map(id => this.resolveNode(id));
     if (path.some(p => !p)) throw new Error('TopicNotFound');
+  // Retorna o resultado da operação
     return path as PathNodeDTO[];
   }
 
@@ -74,6 +90,7 @@ export class TopicGraphService {
     if (!rec) return null;
     const ver = this.topicRepo.getVersion(id, rec.currentVersion);
     if (!ver) return null;
+  // Retorna o resultado da operação
     return { id, name: ver.name, version: ver.version };
   }
 }

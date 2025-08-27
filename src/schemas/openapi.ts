@@ -1,5 +1,15 @@
+/**
+ * openapi.ts
+ * Geração do documento OpenAPI com zod-to-openapi.
+ * Comentários: este arquivo contém comentários explicativos nas principais seções,
+ * descrevendo o que cada bloco faz passo a passo.
+ */
+
+// Importações de dependências e tipos
 import { z } from 'zod';
+// Importações de dependências e tipos
 import { OpenAPIRegistry, OpenApiGeneratorV3, extendZodWithOpenApi } from '@asteasolutions/zod-to-openapi';
+// Importações de dependências e tipos
 import { createTopicSchema, updateTopicSchema, createResourceSchema, updateResourceSchema, loginSchema } from '../services/Services';
 
 extendZodWithOpenApi(z);
@@ -219,8 +229,10 @@ registry.registerPath({
   },
 });
 
+// Declarações/exports principais
 export function getOpenApiDocument() {
   const generator = new OpenApiGeneratorV3(registry.definitions);
+  // Retorna o resultado da operação
   return generator.generateDocument({
     openapi: '3.0.3',
     info: { title: 'Knowledge Base API', version: '1.1.0', description: 'API com Auth (JWT) + RBAC + Shortest Path' },

@@ -1,0 +1,21 @@
+{
+  "name": "knowledge-base-phase1-domain",
+  "version": "1.0.0",
+  "description": "Phase 1 - Domain model (OOP + patterns) for Dynamic Knowledge Base API",
+  "main": "dist/index.js",
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "jest --passWithNoTests",
+    "test:watch": "jest --watch",
+    "lint": "echo \"(add eslint/prettier in later phases)\"",
+    "dev": "echo \"Domain-only package. No server in Phase 1.\""
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.12",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.2.5",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.5.4"
+  }
+}

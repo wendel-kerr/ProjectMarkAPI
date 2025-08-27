@@ -1,7 +1,7 @@
 {
-  "name": "knowledge-base-phase2-persistence",
+  "name": "knowledge-base-phase3-crud",
   "version": "1.0.0",
-  "description": "Phase 2 - In-memory persistence (LokiJS) + Repositories + Minimal Express routes",
+  "description": "Phase 3 - CRUD for Topics (list, update, soft delete) with sibling-name validation",
   "main": "dist/server.js",
   "license": "MIT",
   "scripts": {
@@ -23,7 +23,7 @@
     "@types/node": "^20.11.30",
     "@types/supertest": "^2.0.16",
     "jest": "^29.7.0",
-    "supertest": "^7.1.4",
+    "supertest": "^7.0.0",
     "ts-jest": "^29.2.5",
     "ts-node": "^10.9.2",
     "typescript": "^5.5.4"

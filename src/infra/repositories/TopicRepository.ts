@@ -2,7 +2,35 @@ import { collections, TopicRecord, TopicVersionRecord } from '../db/loki';
 import { randomUUID } from 'crypto';
 
 export class TopicRepository {
-  createRoot(params: { id?: string; name: string; content: string }): { topic: TopicRecord; version: TopicVersionRecord } {
+  private notDeletedFilter(rec: TopicRecord) {
+    return !rec.deletedAt;
+  }
+
+  private getLatestVersion(topicId: string): TopicVersionRecord | null {
+    const v = collections.topic_versions
+      .chain()
+      .find({ topicId })
+      .simplesort('version', true)
+      .limit(1)
+      .data()[0];
+    return v ?? null;
+  }
+
+  private siblingsWithSameName(parentId: string | null, name: string, exceptId?: string): TopicRecord[] {
+    const siblings = collections.topics.find({ parentTopicId: parentId });
+    const filtered = siblings.filter((t: TopicRecord) => this.notDeletedFilter(t) && (!exceptId || t.id !== exceptId));
+    return filtered.filter((t: TopicRecord) => {
+      const v = this.getLatestVersion(t.id);
+      return v?.name === name;
+    });
+  }
+
+  createRoot(params: { id?: string; name: string; content: string }) {
+    // validate duplicate among roots (parent=null)
+    if (this.siblingsWithSameName(null, params.name).length > 0) {
+      throw new Error(`DuplicateSiblingName:${params.name}`);
+    }
+
     const id = params.id ?? randomUUID();
     const now = new Date();
     const topic: TopicRecord = {
@@ -11,6 +39,7 @@ export class TopicRepository {
       currentVersion: 1,
       createdAt: now,
       updatedAt: now,
+      deletedAt: null,
     };
     collections.topics.insert(topic);
 
@@ -28,6 +57,15 @@ export class TopicRepository {
   }
 
   createChild(parentId: string, params: { id?: string; name: string; content: string }) {
+    // ensure parent exists and not deleted
+    const parent = collections.topics.findOne({ id: parentId });
+    if (!parent || parent.deletedAt) throw new Error('ParentNotFound');
+
+    // validate duplicates among siblings
+    if (this.siblingsWithSameName(parentId, params.name).length > 0) {
+      throw new Error(`DuplicateSiblingName:${params.name}`);
+    }
+
     const id = params.id ?? randomUUID();
     const now = new Date();
     const topic: TopicRecord = {
@@ -36,8 +74,10 @@ export class TopicRepository {
       currentVersion: 1,
       createdAt: now,
       updatedAt: now,
+      deletedAt: null,
     };
     collections.topics.insert(topic);
+
     const version: TopicVersionRecord = {
       id: randomUUID(),
       topicId: id,
@@ -53,32 +93,33 @@ export class TopicRepository {
 
   getById(id: string) {
     const topic = collections.topics.findOne({ id });
-    if (!topic) return null;
+    if (!topic || topic.deletedAt) return null;
     const version = collections.topic_versions.findOne({ topicId: id, version: topic.currentVersion });
     if (!version) return null;
     return { topic, version };
   }
 
-  getChildren(parentId: string) {
-    return collections.topics.find({ parentTopicId: parentId });
-  }
-
-  updateVersionPointer(topicId: string, nextVersion: TopicVersionRecord) {
-    const topic = collections.topics.findOne({ id: topicId });
-    if (!topic) return null;
-    topic.currentVersion = nextVersion.version;
-    topic.updatedAt = nextVersion.updatedAt;
-    collections.topics.update(topic);
-    return topic;
+  listByParent(parentId: string | null) {
+    const topics = collections.topics.find({ parentTopicId: parentId }).filter(this.notDeletedFilter);
+    return topics.map((t: TopicRecord) => {
+      const v = collections.topic_versions.findOne({ topicId: t.id, version: t.currentVersion });
+      return v ? { topic: t, version: v } : null;
+    }).filter(Boolean) as { topic: TopicRecord; version: TopicVersionRecord }[];
   }
 
   appendVersion(topicId: string, update: { name?: string; content?: string }) {
-    const latest = collections.topic_versions
-      .chain()
-      .find({ topicId })
-      .simplesort('version', true)
-      .limit(1)
-      .data()[0];
+    const topic = collections.topics.findOne({ id: topicId });
+    if (!topic || topic.deletedAt) return null;
+
+    // if updating name, ensure no duplicate among siblings
+    if (update.name) {
+      const siblings = this.siblingsWithSameName(topic.parentTopicId, update.name, topicId);
+      if (siblings.length > 0) {
+        throw new Error(`DuplicateSiblingName:${update.name}`);
+      }
+    }
+
+    const latest = this.getLatestVersion(topicId);
     if (!latest) return null;
     const now = new Date();
     const next: TopicVersionRecord = {
@@ -91,7 +132,17 @@ export class TopicRepository {
       updatedAt: now,
     };
     collections.topic_versions.insert(next);
-    this.updateVersionPointer(topicId, next);
+    topic.currentVersion = next.version;
+    topic.updatedAt = now;
+    collections.topics.update(topic);
     return next;
+  }
+
+  softDelete(topicId: string) {
+    const topic = collections.topics.findOne({ id: topicId });
+    if (!topic || topic.deletedAt) return false;
+    topic.deletedAt = new Date();
+    collections.topics.update(topic);
+    return true;
   }
 }

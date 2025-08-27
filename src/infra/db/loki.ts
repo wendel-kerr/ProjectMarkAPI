@@ -1,25 +1,26 @@
 import Loki from 'lokijs';
 
 export const db = new Loki('knowledge-base.db', {
-  autoload: false, // we keep in-memory for this phase
+  autoload: false,
 });
 
 export interface TopicRecord {
   id: string;
   parentTopicId: string | null;
-  currentVersion: number; // pointer to latest snapshot
+  currentVersion: number;
   createdAt: Date;
   updatedAt: Date;
+  deletedAt?: Date | null;
 }
 
 export interface TopicVersionRecord {
-  id: string;           // uuid for the version record
+  id: string;
   topicId: string;
   version: number;
   name: string;
   content: string;
-  createdAt: Date;      // first version time
-  updatedAt: Date;      // time of this version creation
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface ResourceRecord {
@@ -41,7 +42,7 @@ export interface UserRecord {
 }
 
 export const collections = {
-  topics: db.addCollection<TopicRecord>('topics', { unique: ['id'] }),
+  topics: db.addCollection<TopicRecord>('topics', { unique: ['id'], indices: ['parentTopicId', 'deletedAt'] }),
   topic_versions: db.addCollection<TopicVersionRecord>('topic_versions', { indices: ['topicId', 'version'] }),
   resources: db.addCollection<ResourceRecord>('resources', { indices: ['topicId'] }),
   users: db.addCollection<UserRecord>('users', { unique: ['id'] }),

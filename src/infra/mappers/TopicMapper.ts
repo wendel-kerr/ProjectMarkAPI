@@ -1,4 +1,3 @@
-import { Topic } from '../../domain/topics/Topic';
 import { TopicRecord, TopicVersionRecord } from '../db/loki';
 
 export type TopicDTO = {

@@ -1,7 +1,7 @@
 {
-  "name": "knowledge-base-phase5-tree",
+  "name": "knowledge-base-phase6-resources",
   "version": "1.0.0",
-  "description": "Phase 5 - Recursive topic tree endpoint with version selector and optional resources",
+  "description": "Phase 6 - CRUD for Resources and integration with recursive tree",
   "main": "dist/server.js",
   "license": "MIT",
   "scripts": {
@@ -19,6 +19,7 @@
   "devDependencies": {
     "@types/express": "^4.17.21",
     "@types/jest": "^29.5.12",
+    "@types/lokijs": "^1.5.14",
     "@types/node": "^20.11.30",
     "@types/supertest": "^2.0.16",
     "jest": "^29.7.0",

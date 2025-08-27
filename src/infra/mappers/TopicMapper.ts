@@ -21,19 +21,12 @@ export type TopicVersionDTO = {
 
 export type ResourceDTO = {
   id: string;
+  topicId: string;
   url: string;
   description?: string;
   type: string;
   createdAt: Date;
   updatedAt: Date;
-};
-
-export type TopicTreeDTO = {
-  id: string;
-  name: string;
-  version: number;
-  children: TopicTreeDTO[];
-  resources?: ResourceDTO[];
 };
 
 export function toTopicDTO(topicRec: TopicRecord, versionRec: TopicVersionRecord): TopicDTO {
@@ -62,6 +55,7 @@ export function toTopicVersionDTO(v: TopicVersionRecord): TopicVersionDTO {
 export function toResourceDTO(r: ResourceRecord): ResourceDTO {
   return {
     id: r.id,
+    topicId: r.topicId,
     url: r.url,
     description: r.description,
     type: r.type,

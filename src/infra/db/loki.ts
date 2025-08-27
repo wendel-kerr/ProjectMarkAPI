@@ -31,6 +31,7 @@ export interface ResourceRecord {
   type: string;
   createdAt: Date;
   updatedAt: Date;
+  deletedAt?: Date | null;
 }
 
 export interface UserRecord {
@@ -44,6 +45,6 @@ export interface UserRecord {
 export const collections = {
   topics: db.addCollection<TopicRecord>('topics', { unique: ['id'], indices: ['parentTopicId', 'deletedAt'] }),
   topic_versions: db.addCollection<TopicVersionRecord>('topic_versions', { indices: ['topicId', 'version'] }),
-  resources: db.addCollection<ResourceRecord>('resources', { indices: ['topicId'] }),
+  resources: db.addCollection<ResourceRecord>('resources', { indices: ['topicId', 'deletedAt'] }),
   users: db.addCollection<UserRecord>('users', { unique: ['id'] }),
 };

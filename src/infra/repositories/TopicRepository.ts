@@ -16,8 +16,8 @@ export class TopicRepository {
 
   private siblingsWithSameName(parentId: string | null, name: string, exceptId?: string): TopicRecord[] {
     const siblings = collections.topics.find({ parentTopicId: parentId });
-    const filtered = siblings.filter(t => this.notDeletedFilter(t) && (!exceptId || t.id !== exceptId));
-    return filtered.filter(t => {
+    const filtered = siblings.filter((t: TopicRecord) => this.notDeletedFilter(t) && (!exceptId || t.id !== exceptId));
+    return filtered.filter((t: TopicRecord) => {
       const v = this.getLatestVersion(t.id);
       return v?.name === name;
     });
@@ -67,7 +67,7 @@ export class TopicRepository {
 
   listByParent(parentId: string | null) {
     const topics = collections.topics.find({ parentTopicId: parentId }).filter(this.notDeletedFilter);
-    return topics.map(t => {
+    return topics.map((t: TopicRecord) => {
       const v = collections.topic_versions.findOne({ topicId: t.id, version: t.currentVersion });
       return v ? { topic: t, version: v } : null;
     }).filter(Boolean) as { topic: TopicRecord; version: TopicVersionRecord }[];
@@ -117,7 +117,7 @@ export class TopicRepository {
     return collections.topic_versions
       .chain()
       .find({ topicId })
-      .simplesort('version', false) // ascending
+      .simplesort('version', false)
       .data();
   }
 

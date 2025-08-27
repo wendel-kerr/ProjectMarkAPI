@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { TopicRepository } from '../infra/repositories/TopicRepository';
 import { ResourceRepository } from '../infra/repositories/ResourceRepository';
-import { TopicService, TopicTreeService } from '../services/TopicService';
+import { TopicService, TopicTreeService } from '../services/Services';
 
 const topicRepo = new TopicRepository();
 const resourceRepo = new ResourceRepository();
@@ -55,7 +55,7 @@ topicsRouter.delete('/:id', (req, res) => {
   res.status(204).send();
 });
 
-// Versions (from Phase 4)
+// Versions
 topicsRouter.get('/:id/versions', (req, res) => {
   const list = service.listVersions(req.params.id);
   if (!list) return res.status(404).json({ message: 'Topic not found' });
@@ -69,7 +69,7 @@ topicsRouter.get('/:id/versions/:version', (req, res) => {
   res.json(item);
 });
 
-// --- New: Tree endpoint
+// Tree
 topicsRouter.get('/:id/tree', (req, res) => {
   const vParam = (req.query.version as string) ?? 'latest';
   const includeResources = ((req.query.includeResources as string) ?? 'false').toLowerCase() === 'true';

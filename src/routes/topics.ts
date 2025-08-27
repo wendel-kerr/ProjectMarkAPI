@@ -51,3 +51,18 @@ topicsRouter.delete('/:id', (req, res) => {
   if (!ok) return res.status(404).json({ message: 'Topic not found' });
   res.status(204).send();
 });
+
+// --- Versioning endpoints
+topicsRouter.get('/:id/versions', (req, res) => {
+  const list = service.listVersions(req.params.id);
+  if (!list) return res.status(404).json({ message: 'Topic not found' });
+  res.json(list);
+});
+
+topicsRouter.get('/:id/versions/:version', (req, res) => {
+  const versionNum = Number(req.params.version);
+  if (!Number.isInteger(versionNum) || versionNum <= 0) return res.status(400).json({ code: 'VALIDATION_ERROR', message: 'version must be a positive integer' });
+  const item = service.getVersion(req.params.id, versionNum);
+  if (!item) return res.status(404).json({ message: 'Version not found' });
+  res.json(item);
+});

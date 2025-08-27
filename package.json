@@ -1,7 +1,7 @@
 {
-  "name": "knowledge-base-phase3-crud",
+  "name": "knowledge-base-phase4-versioning",
   "version": "1.0.0",
-  "description": "Phase 3 - CRUD for Topics (list, update, soft delete) with sibling-name validation",
+  "description": "Phase 4 - Topic versioning endpoints (list & retrieve versions)",
   "main": "dist/server.js",
   "license": "MIT",
   "scripts": {
@@ -19,7 +19,6 @@
   "devDependencies": {
     "@types/express": "^4.17.21",
     "@types/jest": "^29.5.12",
-    "@types/lokijs": "^1.5.14",
     "@types/node": "^20.11.30",
     "@types/supertest": "^2.0.16",
     "jest": "^29.7.0",

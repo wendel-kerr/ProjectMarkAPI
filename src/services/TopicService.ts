@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { TopicRepository } from '../infra/repositories/TopicRepository';
-import { toTopicDTO, TopicDTO } from '../infra/mappers/TopicMapper';
+import { toTopicDTO, TopicDTO, toTopicVersionDTO, TopicVersionDTO } from '../infra/mappers/TopicMapper';
 
 const createTopicSchema = z.object({
   name: z.string().min(1),
@@ -47,5 +47,18 @@ export class TopicService {
 
   deleteTopic(id: string): boolean {
     return this.repo.softDelete(id);
+  }
+
+  // --- Versioning
+  listVersions(id: string): TopicVersionDTO[] | null {
+    const arr = this.repo.listVersions(id);
+    if (!arr) return null;
+    return arr.map(toTopicVersionDTO);
+  }
+
+  getVersion(id: string, version: number): TopicVersionDTO | null {
+    const v = this.repo.getVersion(id, version);
+    if (!v) return null;
+    return toTopicVersionDTO(v);
   }
 }

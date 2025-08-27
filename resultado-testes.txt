@@ -1,16 +1,17 @@
+PASS src/tests/topicComposite.test.ts
 PASS src/tests/roleStrategy.test.ts
 PASS src/tests/topicFactory.test.ts
-PASS src/tests/topicComposite.test.ts
-PASS src/tests/integration/tree.int.test.ts (9.976 s)
-PASS src/tests/integration/rbac.int.test.ts (9.917 s)
-PASS src/tests/integration/versioning.int.test.ts (9.987 s)
-PASS src/tests/integration/topics.int.test.ts (9.971 s)
-PASS src/tests/integration/shortest_path.int.test.ts (9.949 s)
-PASS src/tests/integration/auth_rbac.int.test.ts (9.952 s)
-PASS src/tests/integration/resources.int.test.ts (9.989 s)
+PASS src/tests/integration/tree.int.test.ts (10.542 s)
+PASS src/tests/integration/versioning.int.test.ts (10.545 s)
+PASS src/tests/integration/rbac.int.test.ts (10.512 s)
+PASS src/tests/integration/version_factory.unit.test.ts (10.523 s)
+PASS src/tests/integration/shortest_path.int.test.ts (10.537 s)
+PASS src/tests/integration/topics.int.test.ts (10.548 s)
+PASS src/tests/integration/auth_rbac.int.test.ts (10.666 s)
+PASS src/tests/integration/resources.int.test.ts (10.652 s)
 
-Test Suites: 10 passed, 10 total
-Tests:       14 passed, 14 total
+Test Suites: 11 passed, 11 total
+Tests:       15 passed, 15 total
 Snapshots:   0 total
-Time:        10.824 s
+Time:        11.43 s
 Ran all test suites.

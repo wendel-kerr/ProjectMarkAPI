@@ -1,4 +1,4 @@
-# Knowledge Base API — Auth (JWT) + RBAC + Shortest Path
+# Knowledge Base API — Auth (JWT) + RBAC + Shortest Path + Version Factory
 
 ## Como rodar
 ```bash

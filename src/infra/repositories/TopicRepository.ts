@@ -1,4 +1,5 @@
 import { collections, TopicRecord, TopicVersionRecord } from '../db/loki';
+import { TopicVersionFactory } from '../../domain/versioning/TopicVersionFactory';
 import { randomUUID } from 'crypto';
 
 export class TopicRepository {
@@ -33,7 +34,7 @@ export class TopicRepository {
     const now = new Date();
     const topic: TopicRecord = { id, parentTopicId: null, currentVersion: 1, createdAt: now, updatedAt: now, deletedAt: null };
     collections.topics.insert(topic);
-    const version: TopicVersionRecord = { id: randomUUID(), topicId: id, version: 1, name: params.name, content: params.content, createdAt: now, updatedAt: now };
+    const version: TopicVersionRecord = TopicVersionFactory.createInitial({ topicId: id, name: params.name, content: params.content });
     collections.topic_versions.insert(version);
     return { topic, version };
   }
@@ -46,7 +47,7 @@ export class TopicRepository {
     const now = new Date();
     const topic: TopicRecord = { id, parentTopicId: parentId, currentVersion: 1, createdAt: now, updatedAt: now, deletedAt: null };
     collections.topics.insert(topic);
-    const version: TopicVersionRecord = { id: randomUUID(), topicId: id, version: 1, name: params.name, content: params.content, createdAt: now, updatedAt: now };
+    const version: TopicVersionRecord = TopicVersionFactory.createInitial({ topicId: id, name: params.name, content: params.content });
     collections.topic_versions.insert(version);
     return { topic, version };
   }
@@ -92,15 +93,7 @@ export class TopicRepository {
     const latest = this.getLatestVersion(topicId);
     if (!latest) return null;
     const now = new Date();
-    const next: TopicVersionRecord = {
-      id: randomUUID(),
-      topicId,
-      version: latest.version + 1,
-      name: update.name ?? latest.name,
-      content: update.content ?? latest.content,
-      createdAt: latest.createdAt,
-      updatedAt: now,
-    };
+    const next: TopicVersionRecord = TopicVersionFactory.createNext({ topicId, previous: latest, patch: update });
     collections.topic_versions.insert(next);
     topic.currentVersion = next.version;
     topic.updatedAt = now;

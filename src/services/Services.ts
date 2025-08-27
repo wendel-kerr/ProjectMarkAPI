@@ -138,12 +138,13 @@ export class ResourceService {
 // Auth service
 const emailStrict = z.string().email().trim().transform(v => v.toLowerCase());
 export const loginSchema = z.object({ email: emailStrict, password: z.string().min(3) });
+export type LoginInput = z.infer<typeof loginSchema>;
 
 export class AuthService {
   constructor(private readonly userRepo: UserRepository) {}
 
   async login(input: unknown) {
-    const { email, password } = loginSchema.parse(input);
+    const { email, password }: LoginInput = loginSchema.parse(input);
     const user = await this.userRepo.findByEmail(email);
     if (!user) throw new Error('INVALID_CREDENTIALS');
     const ok = await bcrypt.compare(password, user.passwordHash);

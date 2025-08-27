@@ -1,9 +1,12 @@
 import { Router } from 'express';
 import { TopicRepository } from '../infra/repositories/TopicRepository';
-import { TopicService } from '../services/TopicService';
+import { ResourceRepository } from '../infra/repositories/ResourceRepository';
+import { TopicService, TopicTreeService } from '../services/TopicService';
 
-const repo = new TopicRepository();
-const service = new TopicService(repo);
+const topicRepo = new TopicRepository();
+const resourceRepo = new ResourceRepository();
+const service = new TopicService(topicRepo);
+const treeService = new TopicTreeService(topicRepo, resourceRepo);
 
 export const topicsRouter = Router();
 
@@ -52,17 +55,31 @@ topicsRouter.delete('/:id', (req, res) => {
   res.status(204).send();
 });
 
-// --- Versioning endpoints
+// Versions (from Phase 4)
 topicsRouter.get('/:id/versions', (req, res) => {
   const list = service.listVersions(req.params.id);
   if (!list) return res.status(404).json({ message: 'Topic not found' });
   res.json(list);
 });
-
 topicsRouter.get('/:id/versions/:version', (req, res) => {
   const versionNum = Number(req.params.version);
   if (!Number.isInteger(versionNum) || versionNum <= 0) return res.status(400).json({ code: 'VALIDATION_ERROR', message: 'version must be a positive integer' });
   const item = service.getVersion(req.params.id, versionNum);
   if (!item) return res.status(404).json({ message: 'Version not found' });
   res.json(item);
+});
+
+// --- New: Tree endpoint
+topicsRouter.get('/:id/tree', (req, res) => {
+  const vParam = (req.query.version as string) ?? 'latest';
+  const includeResources = ((req.query.includeResources as string) ?? 'false').toLowerCase() === 'true';
+
+  const version = vParam === 'latest' ? 'latest' : Number(vParam);
+  if (version !== 'latest' && (!Number.isInteger(version) || version <= 0)) {
+    return res.status(400).json({ code: 'VALIDATION_ERROR', message: 'version must be "latest" or a positive integer' });
+  }
+
+  const tree = treeService.getTree(req.params.id, version as any, includeResources);
+  if (!tree) return res.status(404).json({ message: 'Topic not found' });
+  res.json(tree);
 });

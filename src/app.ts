@@ -7,7 +7,7 @@ app.use(express.json());
 app.get('/health', (_req, res) => res.json({ ok: true }));
 app.use('/topics', topicsRouter);
 
-// basic error handler (last resort)
+// basic error handler
 app.use((err: any, _req: any, res: any, _next: any) => {
   console.error(err);
   res.status(500).json({ code: 'INTERNAL_ERROR', message: 'Something went wrong' });

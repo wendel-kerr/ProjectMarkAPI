@@ -59,12 +59,22 @@ export class TopicRepository {
     return { topic, version };
   }
 
+  getTopicRecord(id: string): TopicRecord | null {
+    const topic = collections.topics.findOne({ id });
+    if (!topic || topic.deletedAt) return null;
+    return topic;
+  }
+
   listByParent(parentId: string | null) {
     const topics = collections.topics.find({ parentTopicId: parentId }).filter(this.notDeletedFilter);
     return topics.map(t => {
       const v = collections.topic_versions.findOne({ topicId: t.id, version: t.currentVersion });
       return v ? { topic: t, version: v } : null;
     }).filter(Boolean) as { topic: TopicRecord; version: TopicVersionRecord }[];
+  }
+
+  listChildrenRecords(parentId: string): TopicRecord[] {
+    return collections.topics.find({ parentTopicId: parentId }).filter(this.notDeletedFilter);
   }
 
   appendVersion(topicId: string, update: { name?: string; content?: string }) {
@@ -101,7 +111,6 @@ export class TopicRepository {
     return true;
   }
 
-  // --- Versioning specific ---
   listVersions(topicId: string): TopicVersionRecord[] | null {
     const topic = collections.topics.findOne({ id: topicId });
     if (!topic || topic.deletedAt) return null;

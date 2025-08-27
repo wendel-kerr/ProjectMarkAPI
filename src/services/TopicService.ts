@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { TopicRepository } from '../infra/repositories/TopicRepository';
-import { toTopicDTO, TopicDTO, toTopicVersionDTO, TopicVersionDTO } from '../infra/mappers/TopicMapper';
+import { ResourceRepository } from '../infra/repositories/ResourceRepository';
+import { toTopicDTO, TopicDTO, toTopicVersionDTO, TopicVersionDTO, TopicTreeDTO, toResourceDTO } from '../infra/mappers/TopicMapper';
 
 const createTopicSchema = z.object({
   name: z.string().min(1),
@@ -49,16 +50,70 @@ export class TopicService {
     return this.repo.softDelete(id);
   }
 
-  // --- Versioning
+  // Versioning passthrough (from Phase 4)
   listVersions(id: string): TopicVersionDTO[] | null {
     const arr = this.repo.listVersions(id);
     if (!arr) return null;
     return arr.map(toTopicVersionDTO);
   }
-
   getVersion(id: string, version: number): TopicVersionDTO | null {
     const v = this.repo.getVersion(id, version);
     if (!v) return null;
     return toTopicVersionDTO(v);
+  }
+}
+
+export class TopicTreeService {
+  constructor(
+    private readonly topicRepo: TopicRepository,
+    private readonly resourceRepo: ResourceRepository
+  ) {}
+
+  /**
+   * Builds a recursive tree from a root topic.
+   * @param version 'latest' or a specific number applied to ALL nodes (consistent snapshot)
+   * @param includeResources if true, attach resources[] per node
+   */
+  getTree(rootId: string, version: 'latest' | number = 'latest', includeResources = false): TopicTreeDTO | null {
+    // verify root exists
+    const rootTopicRec = this.topicRepo.getTopicRecord(rootId);
+    if (!rootTopicRec) return null;
+
+    const resolveName = (topicId: string): { name: string; version: number } | null => {
+      const vRec = version === 'latest'
+        ? this.topicRepo.getVersion(topicId, this.topicRepo.getTopicRecord(topicId)!.currentVersion)!
+        : this.topicRepo.getVersion(topicId, version);
+      if (!vRec) return null;
+      return { name: vRec.name, version: vRec.version };
+    };
+
+    const build = (topicId: string): TopicTreeDTO | null => {
+      const tRec = this.topicRepo.getTopicRecord(topicId);
+      if (!tRec) return null;
+      const nm = resolveName(topicId);
+      if (!nm) return null;
+
+      const childRecs = this.topicRepo.listChildrenRecords(topicId);
+      const children: TopicTreeDTO[] = [];
+      for (const c of childRecs) {
+        const node = build(c.id);
+        if (node) children.push(node);
+      }
+
+      const node: TopicTreeDTO = {
+        id: topicId,
+        name: nm.name,
+        version: nm.version,
+        children,
+      };
+
+      if (includeResources) {
+        const resources = this.resourceRepo.listByTopic(topicId).map(toResourceDTO);
+        node.resources = resources;
+      }
+      return node;
+    };
+
+    return build(rootId);
   }
 }

@@ -1,7 +1,7 @@
 {
-  "name": "knowledge-base-phase4-versioning",
+  "name": "knowledge-base-phase5-tree",
   "version": "1.0.0",
-  "description": "Phase 4 - Topic versioning endpoints (list & retrieve versions)",
+  "description": "Phase 5 - Recursive topic tree endpoint with version selector and optional resources",
   "main": "dist/server.js",
   "license": "MIT",
   "scripts": {

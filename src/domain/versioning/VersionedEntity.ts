@@ -9,8 +9,7 @@ export abstract class VersionedEntity<TData> implements IVersioned<TData> {
     this.versions.push(v); this.currentVersion = 1; return v;
   }
   protected createNewVersion(update: Partial<TData>): IVersion<TData> {
-    const prev = this.getLatestVersion ? this.getLatestVersion() : (this as any).getLatestVersion();
-    const now = new Date(); const nextVersionNumber = prev.version + 1;
+    const prev = this.getLatestVersion(); const now = new Date(); const nextVersionNumber = prev.version + 1;
     const next: IVersion<TData> = { version: nextVersionNumber, data: Object.freeze({ ...(prev.data as any), ...(update as any) }), createdAt: prev.createdAt, updatedAt: now };
     this.versions.push(next); this.currentVersion = nextVersionNumber; return next;
   }

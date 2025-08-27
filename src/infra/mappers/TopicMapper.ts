@@ -1,4 +1,4 @@
-import { TopicRecord, TopicVersionRecord } from '../db/loki';
+import { TopicRecord, TopicVersionRecord, ResourceRecord } from '../db/loki';
 
 export type TopicDTO = {
   id: string;
@@ -17,6 +17,23 @@ export type TopicVersionDTO = {
   content: string;
   createdAt: Date;
   updatedAt: Date;
+};
+
+export type ResourceDTO = {
+  id: string;
+  url: string;
+  description?: string;
+  type: string;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+export type TopicTreeDTO = {
+  id: string;
+  name: string;
+  version: number;
+  children: TopicTreeDTO[];
+  resources?: ResourceDTO[];
 };
 
 export function toTopicDTO(topicRec: TopicRecord, versionRec: TopicVersionRecord): TopicDTO {
@@ -39,5 +56,16 @@ export function toTopicVersionDTO(v: TopicVersionRecord): TopicVersionDTO {
     content: v.content,
     createdAt: v.createdAt,
     updatedAt: v.updatedAt,
+  };
+}
+
+export function toResourceDTO(r: ResourceRecord): ResourceDTO {
+  return {
+    id: r.id,
+    url: r.url,
+    description: r.description,
+    type: r.type,
+    createdAt: r.createdAt,
+    updatedAt: r.updatedAt,
   };
 }

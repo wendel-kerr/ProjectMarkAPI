@@ -116,7 +116,7 @@ export class TopicTreeService {
       updatedAt: versionRec.updatedAt,
       children: [],
     };
-    if (includeResources) node.resources = this.resourceRepo.listByTopic(id).map(toResourceDTO);
+    if (includeResources) node.resources = (this.resourceRepo.listByTopic(id).map(r => ({ id: r.id, url: r.url, description: r.description ?? '', type: r.type })) as ReturnType<typeof toResourceDTO>[]);
 
     node.children = this.topicRepo.listChildrenRecords(id).map(c => this.getTree(c.id, 'latest', includeResources)!).filter(Boolean);
 

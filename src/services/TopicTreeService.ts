@@ -1,21 +1,39 @@
+
 import { TopicRepository } from '../infra/repositories/TopicRepository';
-import { toTopicTreeDTO, TopicTreeDTO } from '../infra/mappers/TopicTreeMapper';
+import { ResourceRepository } from '../infra/repositories/ResourceRepository';
+import { TopicTreeDTO } from '../infra/mappers/TopicMapper';
 
 export class TopicTreeService {
-  constructor(private readonly repo: TopicRepository) {}
+  constructor(private repo: TopicRepository, private resourceRepo: ResourceRepository) {}
 
-  buildTree(id: string, version: number|'latest'='latest', includeResources=false): TopicTreeDTO | null {
-    const nodeVersion = this.repo.getVersion(id, version);
-    const nodeRec = this.repo.getById(id)?.topic;
-    if (!nodeRec || !nodeVersion) return null;
+  async getTree(id: string, version: number | 'latest' = 'latest', includeResources = false): Promise<TopicTreeDTO> {
+    const resolvedRootVersion =
+      version === 'latest' ? this.repo.latestVersionNumber(id) : version;
+    const nodeVersion = this.repo.getVersion(id, resolvedRootVersion);
+    if (!nodeVersion) throw new Error('Topic not found');
 
-    const childrenRecs = this.repo.getChildren(id);
-    const childrenTrees = childrenRecs.map(c => {
-      const childVersion = this.repo.getVersion(c.id, version);
-      if (!childVersion) return null;
-      return this.buildTree(c.id, version, includeResources);
-    }).filter(Boolean) as TopicTreeDTO[];
+    const node: TopicTreeDTO = {
+      id: nodeVersion.topicId,
+      name: nodeVersion.name,
+      version: nodeVersion.version,
+      children: [],
+    };
 
-    return toTopicTreeDTO(nodeRec, nodeVersion, childrenTrees);
+    if (includeResources) {
+      const resources = this.resourceRepo.listByTopic(id);
+      node.resources = resources.map(r => ({
+        id: r.id,
+        url: r.url,
+        description: r.description ?? '',
+        type: r.type,
+      }));
+    }
+
+    const children = this.repo.getChildren(id);
+    for (const c of children) {
+      const subtree = await this.getTree(c.id, version, includeResources);
+      node.children.push(subtree);
+    }
+    return node;
   }
 }

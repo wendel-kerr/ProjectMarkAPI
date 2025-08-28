@@ -160,4 +160,29 @@ export class TopicRepository {
   // Retorna o resultado da operação
     return collections.topic_versions.findOne({ topicId, version }) ?? null;
   }
+
+
+// Retorna filhos diretos não deletados do tópico informado
+  public getChildren(parentId: string): TopicRecord[] {
+    const rows = (collections.topics
+      .chain()
+      .find({ parentTopicId: parentId })
+      .data() as TopicRecord[])
+      .filter((t: TopicRecord) => this.notDeletedFilter(t));
+    return rows;
+  }
+
+
+
+// Retorna o número da última versão pública (helper público)
+public latestVersionNumber(topicId: string): number {
+  const v = collections.topic_versions
+    .chain()
+    .find({ topicId })
+    .simplesort('version', true)
+    .limit(1)
+    .data()[0];
+  return v?.version ?? 0;
+}
+
 }

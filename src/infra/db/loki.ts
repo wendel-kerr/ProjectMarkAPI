@@ -57,8 +57,8 @@ export interface UserRecord {
 
 // Declarações/exports principais
 export const collections = {
-  topics: db.addCollection<TopicRecord>('topics', { unique: ['id'], indices: ['parentTopicId', 'deletedAt'] }),
-  topic_versions: db.addCollection<TopicVersionRecord>('topic_versions', { indices: ['topicId', 'version'] }),
-  resources: db.addCollection<ResourceRecord>('resources', { indices: ['topicId', 'deletedAt'] }),
-  users: db.addCollection<UserRecord>('users', { unique: ['id'], indices: ['email'] }),
+  topics: db.addCollection('topics', { unique: ['id'], indices: ['parentTopicId', 'deletedAt'] }),
+  topic_versions: db.addCollection('topic_versions', { indices: ['topicId', 'version'] }),
+  resources: db.addCollection('resources', { indices: ['topicId', 'deletedAt'] }),
+  users: db.addCollection('users', { unique: ['id'], indices: ['email'] }),
 };

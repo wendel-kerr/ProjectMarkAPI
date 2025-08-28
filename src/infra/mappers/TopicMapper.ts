@@ -103,3 +103,17 @@ export function toPublicUserDTO(u: UserRecord): PublicUserDTO {
     updatedAt: u.updatedAt,
   };
 }
+
+// Tipagem do nó de árvore para respostas de /topics/:id/tree
+export type TopicTreeDTO = {
+  id: string;
+  name: string;
+  version: number;
+  children: TopicTreeDTO[];
+  resources?: Array<{
+    id: string;
+    url: string;
+    description: string;
+    type: string;
+  }>;
+};

@@ -1,3 +1,4 @@
+import { env } from '../config/env';
 /**
  * auth.ts
  * Auth guard do JWT e verificação de permissões (RBAC).
@@ -14,7 +15,7 @@ import { DefaultRBACStrategy, PermissionStrategy } from '../domain/security/stra
 // Importações de dependências e tipos
 import { UserRole } from '../domain/users/Role';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret';
+const JWT_SECRET = env.JWT_SECRET;
 
 // Declarações/exports principais
 export type AuthUser = { id: string; name: string; email: string; role: UserRole };

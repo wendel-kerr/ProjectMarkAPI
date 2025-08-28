@@ -1,3 +1,4 @@
+import { env } from './config/env';
 /**
  * server.ts
  * Sobe o servidor HTTP na porta configurada.
@@ -7,5 +8,5 @@
 
 // Importações de dependências e tipos
 import app from './app';
-const port = process.env.PORT || 3000;
-app.listen(port, () => console.log(`KB API on http://localhost:${port}`));
+const port = env.PORT;
+app.listen(port, () => console.log(`KB API on http://localhost:${env.PORT}`));
